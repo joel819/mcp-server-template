@@ -1,0 +1,29 @@
+services:
+  server:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - path: .env
+        required: false   # works without a .env
+    environment:
+      DATA_DIR: /app/data
+    volumes:
+      - mcp-cache:/app/data   # GitHub response cache survives restarts
+    restart: unless-stopped
+
+  # Demo agent, run on demand:
+  #   docker compose run --rm agent "What are the most popular Python MCP repos?"
+  agent:
+    build: .
+    profiles: ["demo"]
+    depends_on:
+      server:
+        condition: service_healthy
+    env_file:
+      - path: .env
+        required: false
+    entrypoint: ["python", "-m", "client", "--url", "http://server:8000/mcp"]
+
+volumes:
+  mcp-cache:
