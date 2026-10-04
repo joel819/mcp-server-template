@@ -2,6 +2,12 @@
 
 A Model Context Protocol (MCP) server over GitHub's public API, with three read-only tools and a demo agent that uses them. It needs no GitHub auth and runs locally for free.
 
+## Screenshot
+
+The built-in explorer at http://localhost:8000. It is a small MCP client: it lists the tools with `tools/list`, builds a form from each tool's input schema, calls it with `tools/call`, and shows the JSON-RPC request and response underneath. Here it lists the files of a repo through the `get_file_contents` tool.
+
+![The MCP explorer page: the three tools, a generated form, a directory listing result and the JSON-RPC on the wire](docs/screenshots/explorer.png)
+
 ## What it does
 
 - **Three MCP tools** built on the official `mcp` Python SDK (FastMCP):
@@ -13,6 +19,7 @@ A Model Context Protocol (MCP) server over GitHub's public API, with three read-
   | `get_file_contents(owner, repo, path?, ref?)` | A decoded text file (truncated if large), or a directory listing |
 
   Each tool has a typed input schema (limits, enums, descriptions) and a structured output schema. All three are marked read-only.
+- **An explorer page** at `/` that talks to the server over MCP, so you can try the tools and see the protocol without installing a client. It sends a browser `Origin` header, so `ALLOWED_ORIGINS` (default: local pages only) decides which pages may call `/mcp`.
 - **Two transports from one server definition:**
   - **Streamable HTTP** at `/mcp`, started with `uvicorn main:app` or Docker.
   - **stdio**, started with `python server_stdio.py`, for Claude Desktop, Cursor or the MCP Inspector.
@@ -51,7 +58,7 @@ python -m client --url http://localhost:8000/mcp "Show open issues in fastapi/fa
 `python -m client` without `--url` starts the server itself over stdio, so you don't need uvicorn for that. With no question, it runs three example questions.
 
 - Health check: http://localhost:8000/health
-- Tests: `pytest`. There are 48 tests, and they need no network, no GitHub token and no Groq key.
+- Tests: `pytest`. There are 49 tests, and they need no network, no GitHub token and no Groq key.
 
 Example output with no key:
 
