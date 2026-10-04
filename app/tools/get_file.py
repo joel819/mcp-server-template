@@ -21,7 +21,8 @@ async def get_file_contents(
     Large files are truncated; binary files are refused."""
     check_repo(owner, repo)
     path = check_path(path)
-    data = await get_github().get_json(f"/repos/{owner}/{repo}/contents/{path}", {"ref": ref})
+    url = f"/repos/{owner}/{repo}/contents" + (f"/{path}" if path else "")
+    data = await get_github().get_json(url, {"ref": ref})
     full = f"{owner}/{repo}"
 
     if isinstance(data, list):  # a directory

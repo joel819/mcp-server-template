@@ -22,7 +22,7 @@ A Model Context Protocol (MCP) server over GitHub's public API, with three read-
   - An optional free `GITHUB_TOKEN` raises the limit to 5,000/hour.
 - **Clear errors for agents.** Each error starts with a code the agent can act on: `not_found`, `rate_limited`, `invalid_input`, `too_large`, `unsupported_binary`, `network_error`, `upstream_error`, `offline_miss`. Timeouts and 5xx responses are retried. Names and paths are validated before any request, so `../` can't escape the repo.
 - **Offline mode.** Serves recorded GitHub responses and never touches the network.
-- **A demo agent** (`python -m client`) connects over MCP and discovers the tools at runtime with `list_tools`. With a Groq key, Llama 3.3 70B decides which tools to call. Without a key, a rule-based planner makes the same MCP calls. The agent prints every tool call it makes.
+- **A demo agent** (`python -m client`) connects over MCP and discovers the tools at runtime with `list_tools`. With a Groq key, gpt-oss-120b decides which tools to call. Without a key, a rule-based planner makes the same MCP calls. The agent prints every tool call it makes.
 
 ## Quickstart
 
@@ -64,6 +64,56 @@ Question: show open issues in fastapi/fastapi
 
 Latest open issues in fastapi/fastapi:
 - #…
+```
+
+## A real run
+
+The demo agent (`python -m client`) with a Groq key, asked about a public repo. It lists the tools over MCP at runtime, picks `get_file_contents` twice (directory listing, then the README) and writes the answer from what the tools returned. Unedited output:
+
+```text
+Connected over stdio. Server tools: search_repos, get_issues, get_file_contents
+Agent: LLM (openai/gpt-oss-120b)
+Question: What files are in the top level of joel819/docs-rag-chatbot, and what does the project do? Use its README.
+
+[tool 1] get_file_contents({'owner': 'joel819', 'path': '', 'repo': 'docs-rag-chatbot'}) -> ok
+[tool 2] get_file_contents({'owner': 'joel819', 'path': 'README.md', 'repo': 'docs-rag-chatbot'}) -> ok
+
+**Top‑level contents of `joel819/docs-rag-chatbot`**
+
+| File / Directory | Type |
+|------------------|------|
+| `app/` | directory |
+| `docs/` | directory |
+| `sample_docs/` | directory |
+| `scripts/` | directory |
+| `tests/` | directory |
+| `.dockerignore` | file |
+| `.env.example` | file |
+| `.gitignore` | file |
+| `docker-compose.yml` | file |
+| `Dockerfile` | file |
+| `main.py` | file |
+| `pytest.ini` | file |
+| `README.md` | file |
+| `requirements.txt` | file |
+
+**What the project does**
+
+`docs-rag-chatbot` is a locally‑run RAG (Retrieval‑Augmented Generation) chatbot for PDF documents.  
+
+- **Upload PDFs** via a web UI or API; each page is extracted, split into overlapping chunks that never cross page boundaries.  
+- **Embed chunks** with the `all‑MiniLM‑L6‑v2` sentence‑transformer (CPU‑only) and store the vectors in ChromaDB.  
+- **Ask questions** – the most relevant chunks are retrieved and sent to an LLM (Groq’s free‑tier `gpt‑oss‑120b` or a built‑in “canned” extractor). The answer must cite the source documents, showing the filename and page number (`[1]`, `[2]`, …).  
+- **Citations are clickable**: clicking a citation opens the PDF at the cited page.  
+- **Honest fallback**: if the documents don’t contain the answer, the system replies “I couldn't find that in the uploaded documents.” instead of hallucinating.  
+- **Duplicate detection** via SHA‑256 hash, and optional document‑specific querying.  
+- **Ready‑to‑try**: three sample PDFs are pre‑indexed on startup, so you can query immediately after cloning.  
+
+The repo includes Docker support, a simple FastAPI backend (`main.py`), a static single‑page UI, SQLite metadata storage, and a full offline test suite.
+
+**Repository URL**
+
+https://github.com/joel819/docs-rag-chatbot
 ```
 
 ## Use it from Claude Desktop, Cursor or the MCP Inspector
