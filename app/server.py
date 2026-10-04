@@ -25,6 +25,7 @@ def build_server() -> FastMCP:
         transport_security=TransportSecuritySettings(
             enable_dns_rebinding_protection=True,
             allowed_hosts=[h.strip() for h in s.allowed_hosts.split(",") if h.strip()],
+            allowed_origins=[o.strip() for o in s.allowed_origins.split(",") if o.strip()],
         ),
     )
     read_only = ToolAnnotations(readOnlyHint=True, openWorldHint=True, idempotentHint=True)

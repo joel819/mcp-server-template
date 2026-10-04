@@ -27,11 +27,13 @@ class Settings(BaseSettings):
 
     # HTTP transport
     allowed_hosts: str = "localhost:*,127.0.0.1:*,server:*"  # Host headers accepted (DNS-rebinding protection)
+    # Browser Origin headers accepted. Local pages (like the built-in explorer at /) only by default.
+    allowed_origins: str = "http://localhost:*,http://127.0.0.1:*"
 
     # Demo agent (client/)
     groq_api_key: str = ""
     groq_base_url: str = "https://api.groq.com/openai/v1"
-    groq_model: str = "llama-3.3-70b-versatile"
+    groq_model: str = "openai/gpt-oss-120b"
     agent_max_steps: int = 6
 
     @property

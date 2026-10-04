@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>MCP Server Explorer</title>
+<style>
+  :root {
+    --paper: #fff4dc; --card: #fffdf7; --ink: #1c1b33; --muted: #6a6780;
+    --orange: #ff6a3d; --mint: #36d6a0; --lemon: #ffd43b; --lilac: #c3b1ff; --sky: #8fd3ff; --rose: #ff9aa2;
+    --shadow: 4px 4px 0 var(--ink);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: var(--ink); font: 15px/1.55 ui-rounded, "Trebuchet MS", system-ui, sans-serif;
+         background-color: var(--paper); background-image: radial-gradient(var(--ink) 0.8px, transparent 0.8px);
+         background-size: 22px 22px; background-blend-mode: soft-light; }
+  .wrap { max-width: 1250px; margin: 0 auto; padding: 28px 16px 48px; display: grid;
+          grid-template-columns: 330px 1fr; gap: 24px; align-items: start; }
+  @media (max-width: 900px) { .wrap { grid-template-columns: 1fr; } }
+  header { grid-column: 1 / -1; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .logo { width: 46px; height: 46px; display: grid; place-items: center; font-size: 24px; background: var(--lemon);
+          border: 3px solid var(--ink); border-radius: 14px; box-shadow: var(--shadow); transform: rotate(-6deg); }
+  h1 { font: 800 30px/1 Georgia, "Times New Roman", serif; margin: 0; letter-spacing: -.5px; }
+  h1 span { background: linear-gradient(transparent 58%, var(--mint) 58%); padding: 0 4px; }
+  h2 { font: 800 13px/1 ui-rounded, system-ui, sans-serif; text-transform: uppercase; letter-spacing: .12em; margin: 0 0 12px; }
+  .badge { font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 99px; background: var(--mint);
+           border: 2px solid var(--ink); box-shadow: 2px 2px 0 var(--ink); }
+  .badge.alt { background: var(--lilac); } .badge.warn { background: var(--lemon); }
+  .meta { font-size: 12px; color: var(--muted); }
+  header > .meta { flex-basis: 100%; }
+  .panel { background: var(--card); border: 3px solid var(--ink); border-radius: 18px; padding: 18px; box-shadow: var(--shadow); }
+  aside .panel + .panel, main .panel + .panel { margin-top: 22px; }
+  .tools { background: var(--sky); }
+  .tool { display: block; width: 100%; text-align: left; margin-bottom: 10px; padding: 10px 14px; font-weight: 700; }
+  .tool:last-child { margin-bottom: 0; }
+  .tool small { display: block; font-weight: 500; font-size: 12px; margin-top: 2px; }
+  .tool.on { background: var(--lemon); }
+  .tool code { font: 700 13px ui-monospace, Menlo, monospace; }
+  button { font: inherit; font-weight: 700; cursor: pointer; border-radius: 12px; border: 2px solid var(--ink);
+           background: var(--card); color: var(--ink); padding: 6px 12px; box-shadow: 2px 2px 0 var(--ink);
+           transition: transform .08s, box-shadow .08s; }
+  button:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--ink); }
+  button:active { transform: translate(2px, 2px); box-shadow: none; }
+  button:disabled { opacity: .5; cursor: default; }
+  button.primary { background: var(--orange); color: #fff; padding: 10px 22px; font-size: 16px; margin-top: 16px; }
+  label { display: block; font-size: 12px; font-weight: 800; margin: 12px 0 4px; letter-spacing: .04em; text-transform: uppercase; }
+  label i { font-style: normal; color: var(--orange); }
+  label small { text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--muted); display: block; }
+  input, select { width: 100%; max-width: 520px; font: inherit; font-weight: 600; padding: 8px 12px; border-radius: 12px;
+                  border: 3px solid var(--ink); background: #fff; color: var(--ink); outline: none; }
+  input:focus, select:focus { box-shadow: 0 0 0 4px var(--lemon); }
+  .ex { margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .ex button { font-size: 12px; background: var(--lilac); }
+  .wire { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 800px) { .wire { grid-template-columns: 1fr; } }
+  .wire h3 { margin: 0 0 6px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
+  pre { margin: 0; white-space: pre-wrap; word-break: break-word; font: 12px/1.5 ui-monospace, Menlo, monospace; background: #fff;
+        border: 2px solid var(--ink); border-radius: 12px; padding: 10px; max-height: 360px; overflow: auto; }
+  .banner { border: 3px solid var(--ink); border-radius: 14px; padding: 10px 14px; font-weight: 600; margin-bottom: 14px; }
+  .banner.err { background: var(--rose); } .banner.ok { background: var(--mint); }
+  .banner code { background: #fff; border: 1.5px solid var(--ink); border-radius: 6px; padding: 0 5px; font-size: 12px; }
+  .cards { display: grid; gap: 12px; }
+  .repo { border: 2px solid var(--ink); border-radius: 14px; background: #fff; padding: 10px 14px; box-shadow: 3px 3px 0 var(--ink); }
+  .repo b a { color: var(--ink); }
+  .repo .stats { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+  .chip { display: inline-block; font-size: 11px; font-weight: 800; padding: 2px 10px; border-radius: 99px; border: 2px solid var(--ink);
+          letter-spacing: .04em; background: var(--lemon); }
+  .chip.m { background: var(--mint); } .chip.l { background: var(--lilac); } .chip.s { background: var(--sky); }
+  ul.files { list-style: none; margin: 0; padding: 0; border: 2px solid var(--ink); border-radius: 12px; background: #fff; overflow: hidden; }
+  ul.files li { display: flex; justify-content: space-between; padding: 7px 12px; border-bottom: 2px dotted var(--ink); font-weight: 700; }
+  ul.files li:last-child { border-bottom: 0; }
+  .empty { padding: 28px 0; font-weight: 700; text-align: center; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo" aria-hidden="true">🔌</div>
+    <h1>MCP <span>explorer</span></h1>
+    <span id="srv" class="badge">connecting…</span>
+    <span id="mode" class="badge alt"></span>
+    <span id="rl" class="badge warn" hidden></span>
+    <span class="meta">This page is an MCP client. It lists the tools with <code>tools/list</code>, builds a form from each tool's schema, and calls it with <code>tools/call</code> over streamable HTTP at <code>/mcp</code>.</span>
+  </header>
+
+  <aside>
+    <div class="panel tools"><h2>Tools the server offers</h2><div id="tools"></div></div>
+  </aside>
+
+  <main>
+    <div class="panel" id="form-panel"><div class="empty">Pick a tool on the left.</div></div>
+    <div class="panel" id="result-panel" hidden>
+      <h2>Result</h2>
+      <div id="friendly"></div>
+    </div>
+    <div class="panel" id="wire-panel" hidden>
+      <h2>On the wire</h2>
+      <div class="wire"><div><h3>Request (JSON-RPC)</h3><pre id="req"></pre></div><div><h3>Response</h3><pre id="res"></pre></div></div>
+    </div>
+  </main>
+</div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let TOOLS = [], current = null, rid = 0;
+const EXAMPLES = {
+  search_repos: [["model context protocol, Python", { query: "model context protocol", language: "python", sort: "stars", limit: 5 }],
+                 ["vector databases", { query: "vector database", sort: "stars", limit: 5 }]],
+  get_issues: [["fastapi/fastapi", { owner: "fastapi", repo: "fastapi", state: "open", limit: 5 }]],
+  get_file_contents: [["fastapi/fastapi: pyproject.toml", { owner: "fastapi", repo: "fastapi", path: "pyproject.toml" }],
+                      ["repo root listing", { owner: "fastapi", repo: "fastapi" }]],
+};
+
+async function rpc(method, params) {
+  const body = { jsonrpc: "2.0", id: ++rid, method, ...(params ? { params } : {}) };
+  const r = await fetch("/mcp", { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json, text/event-stream" }, body: JSON.stringify(body) });
+  const text = await r.text();
+  let json; try { json = JSON.parse(text); } catch { json = { raw: text }; }
+  return { body, json };
+}
+
+function typeOf(p) {
+  if (p.enum) return "enum";
+  const t = p.type || (p.anyOf || []).map((a) => a.type).find((x) => x && x !== "null");
+  return t || "string";
+}
+
+function renderForm(tool) {
+  current = tool;
+  document.querySelectorAll(".tool").forEach((b) => b.classList.toggle("on", b.dataset.name === tool.name));
+  const props = tool.inputSchema.properties || {}, req = new Set(tool.inputSchema.required || []);
+  const fields = Object.entries(props).map(([k, p]) => {
+    const t = typeOf(p), d = p.default ?? "";
+    const input = t === "enum" ? `<select id="f-${k}">${p.enum.map((v) => `<option ${v === d ? "selected" : ""}>${esc(v)}</option>`).join("")}</select>`
+      : `<input id="f-${k}" ${t === "integer" ? `type="number" ${p.minimum != null ? `min="${p.minimum}"` : ""} ${p.maximum != null ? `max="${p.maximum}"` : ""}` : ""} value="${esc(d)}" ${req.has(k) ? "required" : ""}>`;
+    return `<label for="f-${k}">${esc(k)} ${req.has(k) ? "<i>*</i>" : ""}<small>${esc(p.description || "")}</small></label>${input}`;
+  }).join("");
+  const ex = (EXAMPLES[tool.name] || []).map(([t, a], i) => `<button type="button" data-ex="${i}">${esc(t)}</button>`).join("");
+  $("#form-panel").innerHTML = `<h2>${esc(tool.title || tool.name)} <span class="chip s">${esc(tool.name)}</span> ${tool.annotations?.readOnlyHint ? '<span class="chip m">read-only</span>' : ""}</h2>
+    <div class="meta">${esc(tool.description)}</div>
+    <form id="callForm">${fields}<div class="ex">${ex ? "Examples: " + ex : ""}</div><button class="primary" id="go">Call ${esc(tool.name)}</button></form>`;
+  $("#callForm").addEventListener("submit", (e) => { e.preventDefault(); call(); });
+  $("#callForm").querySelectorAll("[data-ex]").forEach((b) => b.addEventListener("click", () => {
+    const a = EXAMPLES[tool.name][b.dataset.ex][1];
+    Object.keys(props).forEach((k) => { const el = $(`#f-${k}`); if (el) el.value = a[k] ?? (props[k].default ?? ""); });
+    call();
+  }));
+}
+
+function collectArgs() {
+  const props = current.inputSchema.properties || {}, args = {};
+  for (const [k, p] of Object.entries(props)) {
+    const v = $(`#f-${k}`).value.trim();
+    if (v === "") continue;
+    args[k] = typeOf(p) === "integer" ? Number(v) : v;
+  }
+  return args;
+}
+
+function friendly(res) {
+  const out = res.result;
+  if (!out) return `<div class="banner err">${esc(res.error?.message || "No result")}</div>`;
+  if (out.isError) {
+    const msg = out.content?.[0]?.text || "Tool error";
+    const m = msg.match(/^([a-z_]+)[:\s]/);
+    return `<div class="banner err">${m ? `<code>${esc(m[1])}</code> ` : ""}${esc(msg.replace(/^[a-z_]+[:\s]\s*/, ""))}</div>
+            <div class="meta">The error starts with a stable code so an agent can decide what to do next.</div>`;
+  }
+  const s = out.structuredContent || {};
+  if (s.items && s.items[0]?.full_name !== undefined || (s.items && s.query)) {
+    return `<div class="banner ok">${esc(s.total_count?.toLocaleString?.() ?? s.items.length)} repositories matched · showing ${s.items.length}</div><div class="cards">` + s.items.map((r) => `
+      <div class="repo"><b><a href="${esc(r.html_url)}" target="_blank" rel="noopener">${esc(r.full_name)}</a></b><div>${esc(r.description || "")}</div>
+      <div class="stats"><span class="chip">★ ${r.stars.toLocaleString()}</span><span class="chip l">${esc(r.language || "–")}</span><span class="chip m">${r.forks.toLocaleString()} forks</span>${(r.topics || []).slice(0, 4).map((t) => `<span class="chip s">${esc(t)}</span>`).join("")}</div></div>`).join("") + "</div>";
+  }
+  if (s.items && s.repo) {
+    return `<div class="banner ok">${s.count} ${esc(s.state)} issues in ${esc(s.repo)} (pull requests filtered out)</div><div class="cards">` + (s.items.length ? s.items.map((i) => `
+      <div class="repo"><b><a href="${esc(i.html_url)}" target="_blank" rel="noopener">#${i.number} ${esc(i.title)}</a></b><div>${esc(i.body_preview)}</div>
+      <div class="stats"><span class="chip m">${esc(i.state)}</span>${i.labels.map((l) => `<span class="chip l">${esc(l)}</span>`).join("")}<span class="chip">${i.comments} comments</span></div></div>`).join("") : '<div class="empty">No open issues.</div>') + "</div>";
+  }
+  if (s.type === "dir") {
+    return `<div class="banner ok">Directory ${esc(s.repo)}:${esc(s.path)}</div><ul class="files">` + s.entries.map((e) => `<li><span>${e.type === "dir" ? "📁" : "📄"} ${esc(e.name)}</span><span class="meta">${e.type === "dir" ? "" : esc(e.size) + " B"}</span></li>`).join("") + "</ul>";
+  }
+  if (s.type === "file") {
+    return `<div class="banner ok">${esc(s.repo)}:${esc(s.path)} · ${esc(s.size)} bytes${s.truncated ? " · truncated" : ""}</div><pre>${esc(s.content)}</pre>`;
+  }
+  return `<pre>${esc(JSON.stringify(s, null, 2))}</pre>`;
+}
+
+async function call() {
+  $("#go").disabled = true;
+  const args = collectArgs();
+  const { body, json } = await rpc("tools/call", { name: current.name, arguments: args });
+  $("#result-panel").hidden = false; $("#wire-panel").hidden = false;
+  $("#friendly").innerHTML = friendly(json);
+  $("#req").textContent = JSON.stringify(body, null, 2);
+  const shown = JSON.stringify(json, null, 2);
+  $("#res").textContent = shown.length > 6000 ? shown.slice(0, 6000) + "\n… (" + (shown.length - 6000) + " more characters)" : shown;
+  $("#go").disabled = false;
+  loadHealth();
+}
+
+async function loadHealth() {
+  const h = await (await fetch("/health")).json();
+  $("#mode").textContent = h.offline_mode ? "offline mode (recorded data)" : "live GitHub API";
+  $("#rl").hidden = h.rate_limit_remaining == null;
+  $("#rl").textContent = `GitHub requests left: ${h.rate_limit_remaining}`;
+}
+
+(async () => {
+  const init = await rpc("initialize", { protocolVersion: "2025-03-26", capabilities: {}, clientInfo: { name: "explorer-page", version: "1.0" } });
+  const info = init.json.result?.serverInfo;
+  $("#srv").textContent = info ? `${info.name} · MCP ${init.json.result.protocolVersion}` : "server unreachable";
+  const list = await rpc("tools/list");
+  TOOLS = list.json.result?.tools || [];
+  $("#tools").innerHTML = TOOLS.map((t) => `<button class="tool" data-name="${esc(t.name)}"><code>${esc(t.name)}</code><small>${esc(t.title || "")}</small></button>`).join("");
+  $("#tools").addEventListener("click", (e) => { const b = e.target.closest(".tool"); if (b) renderForm(TOOLS.find((t) => t.name === b.dataset.name)); });
+  if (TOOLS[0]) renderForm(TOOLS[0]);
+  loadHealth();
+})();
+</script>
+</body>
+</html>

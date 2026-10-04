@@ -75,7 +75,7 @@ async def test_agent_discovers_tools_and_calls_them_over_mcp(gh):
     assert text.startswith("example-org/lighthouse")
     assert [t["tool"] for t in trace] == ["search_repos", "get_issues"]
     first = llm.requests[0]
-    assert first["model"] == "llama-3.3-70b-versatile"
+    assert first["model"] == "openai/gpt-oss-120b"
     assert {t["function"]["name"] for t in first["tools"]} == {"search_repos", "get_issues", "get_file_contents"}
     tool_msg = llm.requests[1]["messages"][-1]
     assert tool_msg["role"] == "tool" and "example-org/lighthouse" in tool_msg["content"]

@@ -54,6 +54,11 @@ def test_http_transport_health_and_host_check():
         evil = c.post("/mcp", json={"jsonrpc": "2.0", "id": 3, "method": "tools/list"},
                       headers={"Host": "evil.example:8000", "Accept": "application/json, text/event-stream"})
         assert evil.status_code in (403, 421)
+        # The explorer page runs in a browser and sends an Origin header: local origins pass, others don't.
+        h = {"Accept": "application/json, text/event-stream"}
+        body = {"jsonrpc": "2.0", "id": 4, "method": "tools/list"}
+        assert c.post("/mcp", json=body, headers={**h, "Origin": "http://localhost:8000"}).status_code == 200
+        assert c.post("/mcp", json=body, headers={**h, "Origin": "https://evil.example"}).status_code == 403
 
 
 async def test_stdio_transport_end_to_end(tmp_path):
@@ -76,3 +81,13 @@ async def test_stdio_transport_end_to_end(tmp_path):
         for k, v in old.items():
             os.environ.pop(k, None) if v is None else os.environ.__setitem__(k, v)
     assert not r.isError and r.structuredContent["items"][0]["stars"] == 5
+
+
+def test_explorer_page_is_served():
+    from starlette.testclient import TestClient
+
+    from main import app
+
+    r = TestClient(app).get("/")
+    assert r.status_code == 200 and "MCP" in r.text and "tools/list" in r.text
+
